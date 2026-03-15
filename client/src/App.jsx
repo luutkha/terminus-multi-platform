@@ -113,7 +113,6 @@ function App() {
     newSocket.on('ssh:error', (data) => {
       console.error('[App] SSH error:', data);
       setConnectingId(null);
-      // Find and update the connecting tab
       const connectingTab = tabs.find(t => t.connecting);
       if (connectingTab) {
         updateTab(connectingTab.id, { connecting: false });
@@ -192,7 +191,6 @@ function App() {
 
   // Connect to SSH
   const connectSSH = useCallback(async (connection) => {
-    // Check if already connected to this server
     const existingTab = tabs.find(tab =>
       tab.type === 'ssh' &&
       tab.connectionId === connection._id &&
@@ -200,7 +198,6 @@ function App() {
     );
 
     if (existingTab) {
-      // Show modal instead of blocking
       setDuplicateModal({
         connection,
         existingTabId: existingTab.id
@@ -406,7 +403,6 @@ function App() {
     }
 
     if (socket && activeSSHTab.sessionId) {
-      // Send the command with Enter
       socket.emit('ssh:input', { sessionId: activeSSHTab.sessionId, data: command.command + '\n' });
     }
   }, [socket, tabs]);
@@ -420,15 +416,20 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-dark-950 text-dark-200 overflow-hidden">
+    <div className="flex flex-col h-screen w-screen overflow-hidden relative">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neon-purple via-neon-cyan to-neon-pink" />
+      </div>
+
       {/* Alert */}
       {alert && (
-        <div className={`px-4 py-2 text-sm flex items-center justify-between ${
-          alert.type === 'error' ? 'bg-red-600' :
-          alert.type === 'warning' ? 'bg-yellow-600' : 'bg-blue-600'
+        <div className={`px-4 py-3 text-sm flex items-center justify-between animate-slide-up z-50 ${
+          alert.type === 'error' ? 'bg-neon-red/20 border border-neon-red/30 text-neon-red' :
+          alert.type === 'warning' ? 'bg-neon-yellow/20 border border-neon-yellow/30 text-neon-yellow' : 'bg-neon-blue/20 border border-neon-blue/30 text-neon-blue'
         }`}>
-          <span className="text-white">{alert.message}</span>
-          <button onClick={() => setAlert(null)} className="text-white hover:text-gray-200">
+          <span className="font-medium">{alert.message}</span>
+          <button onClick={() => setAlert(null)} className="hover:opacity-70 transition-opacity">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -437,28 +438,45 @@ function App() {
       )}
 
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 bg-dark-900 border-b border-dark-700">
+      <header className="flex items-center justify-between px-4 py-3 bg-[#0a0a0f]/90 backdrop-blur-sm border-b border-white/5">
         <div className="flex items-center gap-3">
           <button
             onClick={openDashboard}
-            className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center hover:from-blue-400 hover:to-blue-600 transition-all"
+            className="relative group"
           >
-            <span className="text-white font-bold text-sm">T</span>
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-neon-purple to-neon-cyan p-[1px]">
+              <div className="w-full h-full bg-[#0a0a0f] rounded-lg flex items-center justify-center group-hover:bg-white/5 transition-colors">
+                <span className="text-lg font-bold bg-gradient-to-r from-neon-purple to-neon-cyan bg-clip-text text-transparent">T</span>
+              </div>
+            </div>
+            {/* Glow */}
+            <div className="absolute inset-0 w-9 h-9 rounded-lg bg-gradient-to-br from-neon-purple to-neon-cyan blur-md opacity-50 group-hover:opacity-80 transition-opacity" />
           </button>
-          <h1 className="text-base font-semibold text-dark-100">Terminus</h1>
+          <div>
+            <h1 className="text-base font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Terminus</h1>
+            <p className="text-[10px] text-gray-500 -mt-0.5 tracking-wider">TERMINAL MANAGER</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={openDashboard}
-            className="px-3 py-1.5 text-sm text-dark-400 hover:text-dark-100 hover:bg-dark-700 rounded transition-colors"
+            className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-white/10"
           >
-            Dashboard
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+              Dashboard
+            </span>
           </button>
           <button
             onClick={() => setShowSettings(true)}
-            className="px-3 py-1.5 text-sm text-dark-400 hover:text-dark-100 hover:bg-dark-700 rounded transition-colors"
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-white/10"
           >
-            Settings
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
           </button>
         </div>
       </header>
@@ -483,7 +501,7 @@ function App() {
         />
 
         {/* Terminal Area */}
-        <div className="flex-1 flex flex-col bg-dark-950 overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0f]/50">
           {/* Tab Bar */}
           <TabBar
             tabs={tabs}
@@ -537,28 +555,29 @@ function App() {
 
       {/* Duplicate Connection Modal */}
       {duplicateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setDuplicateModal(null)}>
-          <div className="bg-dark-900 rounded-lg w-full max-w-sm border border-dark-700" onClick={e => e.stopPropagation()}>
-            <div className="p-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-yellow-600/20 flex items-center justify-center">
-                <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 animate-fade-in" onClick={() => setDuplicateModal(null)}>
+          <div className="bg-[#12121a] rounded-xl w-full max-w-sm border border-white/10 shadow-2xl shadow-neon-purple/20 animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="p-8 text-center">
+              {/* Icon */}
+              <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-neon-yellow/20 to-neon-orange/20 flex items-center justify-center border border-neon-yellow/30">
+                <svg className="w-8 h-8 text-neon-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-dark-100 mb-2">Already Connected</h3>
-              <p className="text-dark-400 text-sm mb-6">
-                You are already connected to <span className="text-dark-200 font-medium">{duplicateModal.connection.name || duplicateModal.connection.host}</span>
+              <h3 className="text-xl font-bold text-white mb-2">Already Connected</h3>
+              <p className="text-gray-400 text-sm mb-6">
+                You are already connected to <span className="text-white font-medium">{duplicateModal.connection.name || duplicateModal.connection.host}</span>
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={handleGoToExisting}
-                  className="flex-1 px-4 py-2 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded transition-colors"
+                  className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all border border-white/10 hover:border-white/20 font-medium"
                 >
                   Go to Existing
                 </button>
                 <button
                   onClick={handleOpenNewConnection}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-neon-purple to-neon-pink hover:shadow-lg hover:shadow-neon-purple/30 text-white rounded-lg transition-all font-medium"
                 >
                   Open New
                 </button>

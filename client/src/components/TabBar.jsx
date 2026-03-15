@@ -1,49 +1,78 @@
 function TabBar({ tabs, activeTabId, onTabClick, onTabClose, onNewTab }) {
   return (
-    <div className="flex bg-dark-900 border-b border-dark-700 overflow-x-auto">
+    <div className="flex bg-[#0a0a0f]/80 border-b border-white/5 overflow-x-auto">
       {tabs.map((tab) => (
         <div
           key={tab.id}
-          className={`group flex items-center gap-2 px-4 py-2 text-sm cursor-pointer border-r border-dark-700 transition-colors min-w-0 ${
+          className={`group flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer border-r border-white/5 transition-all min-w-0 relative ${
             tab.id === activeTabId
-              ? 'bg-dark-950 text-dark-100 border-b-2 border-b-blue-600'
-              : 'text-dark-400 hover:bg-dark-800 hover:text-dark-200'
+              ? 'tab-active text-white'
+              : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.02]'
           } ${tab.connecting ? 'opacity-70' : ''}`}
           onClick={() => onTabClick(tab.id)}
         >
+          {/* Active indicator */}
+          {tab.id === activeTabId && (
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-neon-purple via-neon-cyan to-neon-pink" />
+          )}
+
           {tab.connecting ? (
-            <svg className="w-4 h-4 animate-spin text-blue-400" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+            <div className="w-4 h-4 relative">
+              <div className="absolute inset-0 rounded-full border-2 border-neon-purple/30" />
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-neon-purple animate-spin" />
+            </div>
+          ) : tab.type === 'ssh' ? (
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-neon-green/20 to-neon-cyan/20 flex items-center justify-center">
+              <svg className="w-3 h-3 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+          ) : tab.type === 'dashboard' ? (
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-neon-purple/20 to-neon-pink/20 flex items-center justify-center">
+              <svg className="w-3 h-3 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </div>
           ) : (
-            <span className="text-xs">{tab.type === 'ssh' ? '🔒' : '🖥'}</span>
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-neon-cyan/20 to-neon-blue/20 flex items-center justify-center">
+              <svg className="w-3 h-3 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
           )}
-          <span className="truncate max-w-32">{tab.title}</span>
+
+          <span className="truncate max-w-36">{tab.title}</span>
+
           {tab.connecting && (
-            <span className="text-xs text-blue-400">Connecting...</span>
+            <span className="text-xs text-neon-purple animate-pulse">Connecting...</span>
           )}
+
+          {/* Close button */}
           <button
-            className="ml-1 p-0.5 text-dark-400 hover:text-dark-100 hover:bg-dark-700 rounded transition-colors opacity-0 group-hover:opacity-100"
+            className="ml-1 p-1 rounded transition-all opacity-0 group-hover:opacity-100 hover:bg-white/10 text-gray-500 hover:text-white"
             onClick={(e) => {
               e.stopPropagation();
               onTabClose(tab.id);
             }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
       ))}
+
+      {/* New Tab Button */}
       <button
-        className="flex items-center justify-center px-3 py-2 text-dark-400 hover:text-dark-100 hover:bg-dark-800 transition-colors"
+        className="flex items-center justify-center px-3 py-2.5 text-gray-500 hover:text-white hover:bg-white/[0.02] transition-all group border-l border-white/5"
         onClick={onNewTab}
         title="New Terminal"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
+        <div className="w-5 h-5 rounded-md flex items-center justify-center border border-dashed border-white/10 group-hover:border-neon-purple/50 group-hover:bg-neon-purple/10 transition-all">
+          <svg className="w-3 h-3 group-hover:text-neon-purple transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </div>
       </button>
     </div>
   );

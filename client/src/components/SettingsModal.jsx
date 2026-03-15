@@ -18,8 +18,8 @@ function SettingsModal({ onClose }) {
   const themes = [
     { id: 'dark', name: 'Dark', color: '#1e1e1e' },
     { id: 'light', name: 'Light', color: '#ffffff' },
-    { id: 'blue', name: 'Ocean Blue', color: '#0ea5e9' },
-    { id: 'green', name: 'Forest Green', color: '#22c55e' },
+    { id: 'blue', name: 'Ocean', color: '#0ea5e9' },
+    { id: 'green', name: 'Forest', color: '#22c55e' },
     { id: 'purple', name: 'Purple', color: '#a855f7' },
     { id: 'red', name: 'Red', color: '#ef4444' },
     { id: 'orange', name: 'Orange', color: '#f97316' },
@@ -27,38 +27,48 @@ function SettingsModal({ onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-dark-900 rounded-lg w-full max-w-lg border border-dark-700" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-dark-700">
-          <h3 className="text-lg font-semibold text-dark-100">Settings</h3>
-          <button onClick={onClose} className="text-dark-400 hover:text-dark-100 transition-colors">
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 animate-fade-in" onClick={onClose}>
+      <div className="bg-[#12121a] rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-neon-purple/10 animate-scale-in" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-purple to-neon-cyan flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-white">Settings</h3>
+          </div>
+          <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
+
         <div className="p-6">
           <form onSubmit={handleSubmit}>
             {/* Theme Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-dark-300 mb-3">Theme Color</label>
+              <label className="block text-sm font-medium text-gray-400 mb-3">Theme Color</label>
               <div className="grid grid-cols-4 gap-3">
                 {themes.map((theme) => (
                   <button
                     key={theme.id}
                     type="button"
                     onClick={() => setFormData({ ...formData, theme: theme.id, themeColor: theme.color })}
-                    className={`p-3 rounded-lg border-2 transition-all ${
+                    className={`p-3 rounded-xl border-2 transition-all ${
                       formData.theme === theme.id
-                        ? 'border-blue-500 bg-dark-800'
-                        : 'border-dark-700 hover:border-dark-600 bg-dark-800'
+                        ? 'border-neon-purple bg-white/5 shadow-neon-purple/20'
+                        : 'border-white/10 hover:border-white/20 bg-white/5'
                     }`}
                   >
                     <div
-                      className="w-full h-8 rounded mb-2"
+                      className="w-full h-8 rounded-lg mb-2 shadow-lg"
                       style={{ backgroundColor: theme.color }}
                     />
-                    <span className="text-xs text-dark-300">{theme.name}</span>
+                    <span className="text-xs text-gray-400">{theme.name}</span>
                   </button>
                 ))}
               </div>
@@ -66,25 +76,25 @@ function SettingsModal({ onClose }) {
 
             {/* Font Size */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-dark-300 mb-2">Font Size</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Font Size</label>
               <div className="flex items-center gap-4">
                 <input
                   type="range"
-                  className="flex-1 h-2 bg-dark-700 rounded-lg appearance-none cursor-pointer"
+                  className="flex-1 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
                   value={formData.fontSize || 14}
                   onChange={(e) => setFormData({ ...formData, fontSize: parseInt(e.target.value) })}
                   min={10}
                   max={24}
                 />
-                <span className="text-sm text-dark-300 w-8">{formData.fontSize || 14}px</span>
+                <span className="text-sm text-white w-8 font-mono">{formData.fontSize || 14}px</span>
               </div>
             </div>
 
             {/* Font Family */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-dark-300 mb-2">Font Family</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Font Family</label>
               <select
-                className="w-full px-4 py-2 bg-dark-950 border border-dark-700 rounded-lg text-dark-200 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
                 value={formData.fontFamily || 'Consolas, monospace'}
                 onChange={(e) => setFormData({ ...formData, fontFamily: e.target.value })}
               >
@@ -93,14 +103,15 @@ function SettingsModal({ onClose }) {
                 <option value="'Courier New', monospace">Courier New</option>
                 <option value="Fira Code, monospace">Fira Code</option>
                 <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                <option value="JetBrains Mono, monospace">JetBrains Mono</option>
               </select>
             </div>
 
             {/* Font Weight */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-dark-300 mb-2">Font Weight</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Font Weight</label>
               <select
-                className="w-full px-4 py-2 bg-dark-950 border border-dark-700 rounded-lg text-dark-200 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
                 value={formData.fontWeight || 'normal'}
                 onChange={(e) => setFormData({ ...formData, fontWeight: e.target.value })}
               >
@@ -111,9 +122,9 @@ function SettingsModal({ onClose }) {
 
             {/* Cursor Style */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-dark-300 mb-2">Cursor Style</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Cursor Style</label>
               <select
-                className="w-full px-4 py-2 bg-dark-950 border border-dark-700 rounded-lg text-dark-200 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
                 value={formData.cursorStyle || 'block'}
                 onChange={(e) => setFormData({ ...formData, cursorStyle: e.target.value })}
               >
@@ -124,23 +135,23 @@ function SettingsModal({ onClose }) {
             </div>
 
             {/* Cursor Blink */}
-            <div className="mb-4">
-              <label className="flex items-center gap-3 cursor-pointer">
+            <div className="mb-6">
+              <label className="flex items-center gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={formData.cursorBlink !== false}
                   onChange={(e) => setFormData({ ...formData, cursorBlink: e.target.checked })}
-                  className="w-4 h-4 rounded border-dark-600 bg-dark-950 text-blue-600 focus:ring-blue-600"
+                  className="w-5 h-5 rounded border-white/20 bg-white/5 text-neon-purple focus:ring-neon-purple/50 focus:ring-offset-0"
                 />
-                <span className="text-sm text-dark-300">Cursor Blink</span>
+                <span className="text-sm text-gray-400 group-hover:text-white transition-colors">Cursor Blink</span>
               </label>
             </div>
 
             {/* Scrollback Buffer */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-dark-300 mb-2">Scrollback Buffer</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Scrollback Buffer</label>
               <select
-                className="w-full px-4 py-2 bg-dark-950 border border-dark-700 rounded-lg text-dark-200 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
                 value={formData.scrollback || 10000}
                 onChange={(e) => setFormData({ ...formData, scrollback: parseInt(e.target.value) })}
               >
@@ -153,10 +164,10 @@ function SettingsModal({ onClose }) {
             </div>
 
             <div className="flex gap-3">
-              <button type="submit" className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
-                Save
+              <button type="submit" className="flex-1 px-4 py-3 bg-gradient-to-r from-neon-purple to-neon-pink hover:shadow-lg hover:shadow-neon-purple/30 text-white rounded-xl transition-all font-medium">
+                Save Changes
               </button>
-              <button type="button" onClick={onClose} className="px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors">
+              <button type="button" onClick={onClose} className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all border border-white/10 hover:border-white/20">
                 Cancel
               </button>
             </div>

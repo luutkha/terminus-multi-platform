@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useStore } from '../store';
 
 function CommandModal({ command, onSave, onClose }) {
   const [formData, setFormData] = useState({
@@ -28,25 +27,34 @@ function CommandModal({ command, onSave, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-dark-900 rounded-lg w-full max-w-md border border-dark-700" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-dark-700">
-          <h3 className="text-lg font-semibold text-dark-100">
-            {command ? 'Edit Command' : 'New Command'}
-          </h3>
-          <button onClick={onClose} className="text-dark-400 hover:text-dark-100 transition-colors">
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 animate-fade-in" onClick={onClose}>
+      <div className="bg-[#12121a] rounded-xl w-full max-w-md border border-white/10 shadow-2xl shadow-neon-pink/10 animate-scale-in" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-pink to-neon-purple flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-white">
+              {command ? 'Edit Command' : 'New Command'}
+            </h3>
+          </div>
+          <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="p-4">
+
+        <div className="p-5">
           <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="block text-sm text-dark-400 mb-1">Name</label>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Name</label>
               <input
                 type="text"
-                className="w-full px-3 py-2 bg-dark-950 border border-dark-700 rounded text-dark-200 focus:outline-none focus:border-blue-600"
+                className="input-neon w-full"
                 placeholder="System Info"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -54,11 +62,10 @@ function CommandModal({ command, onSave, onClose }) {
               />
             </div>
 
-            <div className="mb-3">
-              <label className="block text-sm text-dark-400 mb-1">Command</label>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Command</label>
               <textarea
-                className="w-full px-3 py-2 bg-dark-950 border border-dark-700 rounded text-dark-200 focus:outline-none focus:border-blue-600 font-mono text-sm"
-                rows={3}
+                className="input-neon w-full font-mono text-sm h-24 resize-none"
                 placeholder="uname -a && uptime"
                 value={formData.command}
                 onChange={(e) => setFormData({ ...formData, command: e.target.value })}
@@ -66,21 +73,21 @@ function CommandModal({ command, onSave, onClose }) {
               />
             </div>
 
-            <div className="mb-3">
-              <label className="block text-sm text-dark-400 mb-1">Description</label>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Description</label>
               <input
                 type="text"
-                className="w-full px-3 py-2 bg-dark-950 border border-dark-700 rounded text-dark-200 focus:outline-none focus:border-blue-600"
+                className="input-neon w-full"
                 placeholder="Show system information"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
 
-            <div className="mb-3">
-              <label className="block text-sm text-dark-400 mb-1">Category</label>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Category</label>
               <select
-                className="w-full px-3 py-2 bg-dark-950 border border-dark-700 rounded text-dark-200 focus:outline-none focus:border-blue-600"
+                className="input-neon w-full"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               >
@@ -93,23 +100,23 @@ function CommandModal({ command, onSave, onClose }) {
               </select>
             </div>
 
-            <div className="mb-4">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <div className="mb-6">
+              <label className="flex items-center gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={formData.enabled}
                   onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                  className="w-4 h-4 rounded border-dark-600 bg-dark-950 text-blue-600"
+                  className="w-5 h-5 rounded border-white/20 bg-white/5 text-neon-pink focus:ring-neon-pink/50 focus:ring-offset-0"
                 />
-                <span className="text-sm text-dark-300">Enabled</span>
+                <span className="text-sm text-gray-400 group-hover:text-white transition-colors">Enabled</span>
               </label>
             </div>
 
-            <div className="flex gap-2">
-              <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors">
+            <div className="flex gap-3">
+              <button type="submit" className="flex-1 px-4 py-3 bg-gradient-to-r from-neon-pink to-neon-purple hover:shadow-lg hover:shadow-neon-pink/30 text-white rounded-xl transition-all font-medium">
                 Save
               </button>
-              <button type="button" onClick={onClose} className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded transition-colors">
+              <button type="button" onClick={onClose} className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all border border-white/10 hover:border-white/20">
                 Cancel
               </button>
             </div>
