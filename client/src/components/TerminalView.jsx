@@ -277,7 +277,7 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
 
   if (!activeTab) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#0a0a0f]">
+      <div className="h-full flex items-center justify-center bg-[#0a0a0f]">
         <div className="text-center animate-fade-in">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-neon-purple/20 to-neon-cyan/20 flex items-center justify-center">
             <svg className="w-10 h-10 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,7 +298,7 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
   const theme = getTerminalTheme();
 
   return (
-    <div className="flex-1 p-1 overflow-hidden" style={{ backgroundColor: theme.background }}>
+    <div className="h-full w-full" style={{ backgroundColor: theme.background }}>
       <div ref={containerRef} className="w-full h-full" />
     </div>
   );
