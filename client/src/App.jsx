@@ -580,6 +580,7 @@ function App() {
             onTabClick={setActiveTab}
             onTabClose={closeTerminal}
             onNewTab={createTerminal}
+            onTabRename={(tabId, newTitle) => updateTab(tabId, { title: newTitle })}
           />
 
           {/* Content */}

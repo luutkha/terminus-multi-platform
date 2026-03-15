@@ -1,4 +1,30 @@
-function TabBar({ tabs, activeTabId, onTabClick, onTabClose, onNewTab }) {
+import { useState } from 'react';
+
+function TabBar({ tabs, activeTabId, onTabClick, onTabClose, onNewTab, onTabRename }) {
+  const [editingTabId, setEditingTabId] = useState(null);
+  const [editValue, setEditValue] = useState('');
+
+  const handleDoubleClick = (e, tab) => {
+    e.stopPropagation();
+    setEditingTabId(tab.id);
+    setEditValue(tab.title);
+  };
+
+  const handleRenameSubmit = (tabId) => {
+    if (editValue.trim()) {
+      onTabRename(tabId, editValue.trim());
+    }
+    setEditingTabId(null);
+  };
+
+  const handleKeyDown = (e, tabId) => {
+    if (e.key === 'Enter') {
+      handleRenameSubmit(tabId);
+    } else if (e.key === 'Escape') {
+      setEditingTabId(null);
+    }
+  };
+
   return (
     <div className="flex bg-[#0a0a0f]/80 border-b border-white/5 overflow-x-auto">
       {tabs.map((tab) => (
@@ -41,7 +67,26 @@ function TabBar({ tabs, activeTabId, onTabClick, onTabClose, onNewTab }) {
             </div>
           )}
 
-          <span className="truncate max-w-36">{tab.title}</span>
+          {editingTabId === tab.id ? (
+            <input
+              type="text"
+              className="bg-white/10 border border-neon-purple/50 rounded px-1 py-0.5 text-white text-sm w-28 outline-none"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => handleRenameSubmit(tab.id)}
+              onKeyDown={(e) => handleKeyDown(e, tab.id)}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span
+              className="truncate max-w-36"
+              onDoubleClick={(e) => handleDoubleClick(e, tab)}
+              title="Double-click to rename"
+            >
+              {tab.title}
+            </span>
+          )}
 
           {tab.connecting && (
             <span className="text-xs text-neon-purple animate-pulse">Connecting...</span>
