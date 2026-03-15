@@ -65,7 +65,7 @@ function CommandModal({ command, onSave, onClose }) {
           </button>
         </div>
 
-        <div className="p-5">
+        <div className="p-5 max-h-[70vh] overflow-y-auto">
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-sm text-gray-400 mb-2">Name</label>
