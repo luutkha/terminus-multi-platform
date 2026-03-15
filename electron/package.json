@@ -1,0 +1,46 @@
+{
+  "name": "terminus-electron",
+  "version": "1.0.0",
+  "description": "Desktop terminal emulator like Terminus",
+  "author": "Terminus",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "electron-builder --win --x64",
+    "start": "electron ."
+  },
+  "build": {
+    "appId": "com.terminus.app",
+    "productName": "Terminus",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "backend/**/*",
+      "../client/dist/**/*"
+    ],
+    "win": {
+      "target": "zip",
+      "icon": null
+    },
+    "portable": {
+      "artifactName": "Terminus.exe"
+    },
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": true
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1"
+  }
+}
