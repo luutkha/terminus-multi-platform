@@ -80,10 +80,10 @@ function CommandModal({ command, onSave, onClose }) {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Command</label>
+              <label className="block text-sm text-gray-400 mb-2">Command (one per line)</label>
               <textarea
-                className="input-neon w-full font-mono text-sm h-24 resize-none"
-                placeholder="uname -a && uptime"
+                className="input-neon w-full font-mono text-sm h-32 resize-none"
+                placeholder={"cd /var/log\nls -la"}
                 value={formData.command}
                 onChange={(e) => setFormData({ ...formData, command: e.target.value })}
                 required

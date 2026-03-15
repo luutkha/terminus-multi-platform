@@ -435,16 +435,42 @@ function App() {
     }
   };
 
-  // Execute command in active SSH session
+  // Execute command in active terminal (SSH or local)
   const handleExecuteCommand = useCallback((command) => {
-    const activeSSHTab = tabs.find(tab => tab.type === 'ssh' && tab.sessionId);
-    if (!activeSSHTab) {
-      setAlert({ type: 'warning', message: 'No active SSH connection. Connect to a server first.' });
+    // Use the currently active tab (selected terminal)
+    const activeTab = tabs.find(tab => tab.id === activeTabId);
+
+    if (!activeTab || !activeTab.sessionId) {
+      setAlert({ type: 'warning', message: 'No active terminal. Open and select a terminal first.' });
       return;
     }
 
-    if (socket && activeSSHTab.sessionId) {
-      socket.emit('ssh:input', { sessionId: activeSSHTab.sessionId, data: command.command + '\n' });
+    if (socket && activeTab.sessionId) {
+      // Split commands by new line (handle both \n and \r\n)
+      const commands = command.command
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .filter(cmd => cmd.trim());
+
+      // Execute commands with a small delay between them
+      const executeWithDelay = async () => {
+        for (let i = 0; i < commands.length; i++) {
+          const cmd = commands[i];
+          // Send the command
+          if (activeTab.type === 'ssh') {
+            socket.emit('ssh:input', { sessionId: activeTab.sessionId, data: cmd + '\r' });
+          } else {
+            socket.emit('terminal:input', { sessionId: activeTab.sessionId, data: cmd + '\r' });
+          }
+          // Small delay between commands (except for the last one)
+          if (i < commands.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        }
+      };
+
+      executeWithDelay();
     }
   }, [socket, tabs]);
 

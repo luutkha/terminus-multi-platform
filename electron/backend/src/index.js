@@ -399,6 +399,7 @@ app.delete('/api/connections/:id', async (req, res) => {
 app.get('/api/commands', async (req, res) => {
   try {
     const commands = await Command.find().sort({ createdAt: -1 });
+    console.log('[Backend] Returning commands:', commands.map(c => ({ name: c.name, command: c.command })));
     res.json(commands);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -407,6 +408,7 @@ app.get('/api/commands', async (req, res) => {
 
 app.post('/api/commands', async (req, res) => {
   try {
+    console.log('[Backend] Received command:', req.body);
     const command = new Command(req.body);
     await command.save();
     res.json(command);
