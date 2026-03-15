@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { ClipboardAddon } from '@xterm/addon-clipboard';
 import 'xterm/css/xterm.css';
 import terminalThemes from '../styles/terminalThemes';
 
@@ -18,6 +19,7 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
   const activeTab = tabs.find(t => t.id === activeTabId);
   const activeTabIdsRef = useRef(new Set());
   const settingsRef = useRef(settings);
+  const clipboardAddonRef = useRef(null);
 
   // Update settings ref when settings change
   useEffect(() => {
@@ -29,6 +31,19 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     const themeName = settingsRef.current?.terminalTheme || 'defaultDark';
     return terminalThemes[themeName] || defaultTheme;
   }, []);
+
+  // Copy function
+  const copySelection = useCallback(() => {
+    const terminalObj = terminals.get(activeTab?.id);
+    if (terminalObj?.terminal?.hasSelection()) {
+      const selection = terminalObj.terminal.getSelection();
+      if (selection) {
+        navigator.clipboard.writeText(selection);
+        return true;
+      }
+    }
+    return false;
+  }, [activeTab]);
 
   // Update active tab IDs whenever tabs change
   useEffect(() => {
@@ -76,13 +91,20 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       cursorStyle: settingsRef.current?.cursorStyle || 'block',
       scrollback,
       allowTransparency: false,
-      convertEol: true
+      convertEol: true,
+      copyOnSelect: true,
+      macOptionIsMeta: false,
     });
 
     const fit = new FitAddon();
     term.loadAddon(fit);
 
-    terminals.set(tabId, { terminal: term, fitAddon: fit, sessionId: null });
+    // Load clipboard addon for copy/paste support
+    const clipboardAddon = new ClipboardAddon();
+    term.loadAddon(clipboardAddon);
+    clipboardAddonRef.current = clipboardAddon;
+
+    terminals.set(tabId, { terminal: term, fitAddon: fit, clipboardAddon, sessionId: null });
 
     return terminals.get(tabId);
   }, [getTerminalTheme]);
@@ -95,7 +117,7 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
 
     // Get or create terminal
     const terminalObj = createTerminalForTab(activeTab.id);
-    const { terminal, fitAddon } = terminalObj;
+    const { terminal, fitAddon, clipboardAddon } = terminalObj;
 
     // Get or create container
     let container = document.getElementById(`terminal-${activeTab.id}`);
@@ -121,6 +143,9 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     terminal.options.cursorBlink = settingsRef.current?.cursorBlink !== false;
     terminal.options.cursorStyle = settingsRef.current?.cursorStyle || 'block';
 
+    // Store clipboard addon reference
+    clipboardAddonRef.current = clipboardAddon;
+
     // Show this terminal, hide others
     terminals.forEach((obj, id) => {
       const el = document.getElementById(`terminal-${id}`);
@@ -142,7 +167,7 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     const terminalObj = terminals.get(activeTab.id);
     const { terminal } = terminalObj;
 
-    // Only clear if this is a completely new session (never had a session before)
+    // Only clear if this is a completely new session
     const isNewSession = !terminalObj.sessionId && activeTab.sessionId;
     if (isNewSession) {
       terminal.clear();
@@ -186,13 +211,33 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
 
   }, [activeTab?.id, activeTab?.sessionId, onInput, onResize]);
 
+  // Handle keyboard shortcuts for copy
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+Shift+C or Ctrl+Shift+Ins - Copy
+      if ((e.ctrlKey && e.shiftKey && e.key === 'C') ||
+          (e.ctrlKey && e.shiftKey && e.key === 'Insert')) {
+        e.preventDefault();
+        const terminalObj = terminals.get(activeTab?.id);
+        if (terminalObj?.terminal?.hasSelection()) {
+          const selection = terminalObj.terminal.getSelection();
+          if (selection) {
+            navigator.clipboard.writeText(selection);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab]);
+
   // Listen for terminal data
   useEffect(() => {
     const handleTerminalData = (event) => {
       const { sessionId: incomingSessionId, data } = event.detail;
       if (!activeTab || incomingSessionId !== activeTab.sessionId) return;
 
-      // Check if tab is still active
       if (!activeTabIdsRef.current.has(activeTab.id)) return;
 
       const terminalObj = terminals.get(activeTab.id);
@@ -205,7 +250,6 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       const { sessionId: incomingSessionId, data } = event.detail;
       if (!activeTab || incomingSessionId !== activeTab.sessionId) return;
 
-      // Check if tab is still active
       if (!activeTabIdsRef.current.has(activeTab.id)) return;
 
       const terminalObj = terminals.get(activeTab.id);
