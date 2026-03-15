@@ -20,8 +20,22 @@ function Sidebar({
   connectingId
 }) {
   const [activeSection, setActiveSection] = useState('connections');
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [contextMenu, setContextMenu] = useState(null);
   const [contextMenuType, setContextMenuType] = useState(null);
+
+  // Toggle group expand/collapse
+  const toggleGroup = (groupId) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     const handleClick = () => setContextMenu(null);
@@ -252,7 +266,7 @@ function Sidebar({
                     <div key={group._id}>
                       <div
                         className="px-4 py-1.5 text-[10px] text-gray-600 uppercase font-medium tracking-wider flex items-center gap-2 cursor-pointer hover:bg-white/5"
-                        onClick={() => setActiveSection(activeSection === `group-${group._id}` ? 'commands' : `group-${group._id}`)}
+                        onClick={() => toggleGroup(group._id)}
                         onContextMenu={(e) => handleContextMenu(e, group, 'commandGroup')}
                       >
                         <span
@@ -261,11 +275,11 @@ function Sidebar({
                         />
                         <span>{group.name}</span>
                         <span className="text-gray-500 text-[9px]">({groupCommands.length})</span>
-                        <svg className={`w-3 h-3 ml-auto transition-transform ${activeSection === `group-${group._id}` ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-3 h-3 ml-auto transition-transform ${expandedGroups.has(group._id) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
-                      {activeSection === `group-${group._id}` && groupCommands.map((cmd) => (
+                      {expandedGroups.has(group._id) && groupCommands.map((cmd) => (
                         <div
                           key={cmd._id}
                           className={`mx-2 px-3 py-2 flex items-center gap-3 cursor-pointer rounded-lg transition-all group ${
@@ -300,16 +314,16 @@ function Sidebar({
                   <div key="uncategorized">
                     <div
                       className="px-4 py-1.5 text-[10px] text-gray-600 uppercase font-medium tracking-wider flex items-center gap-2 cursor-pointer hover:bg-white/5"
-                      onClick={() => setActiveSection(activeSection === 'uncategorized' ? 'commands' : 'uncategorized')}
+                      onClick={() => toggleGroup('uncategorized')}
                     >
                       <span className="w-1 h-1 rounded-full bg-neon-cyan/50" />
                       Uncategorized
                       <span className="text-gray-500 text-[9px]">({uncategorizedCommands.length})</span>
-                      <svg className={`w-3 h-3 ml-auto transition-transform ${activeSection === 'uncategorized' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-3 h-3 ml-auto transition-transform ${expandedGroups.has('uncategorized') ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
-                    {activeSection === 'uncategorized' && uncategorizedCommands.map((cmd) => (
+                    {expandedGroups.has('uncategorized') && uncategorizedCommands.map((cmd) => (
                       <div
                         key={cmd._id}
                         className={`mx-2 px-3 py-2 flex items-center gap-3 cursor-pointer rounded-lg transition-all group ${
@@ -343,16 +357,16 @@ function Sidebar({
                   <div key={category}>
                     <div
                       className="px-4 py-1.5 text-[10px] text-gray-600 uppercase font-medium tracking-wider flex items-center gap-2 cursor-pointer hover:bg-white/5"
-                      onClick={() => setActiveSection(activeSection === `cat-${category}` ? 'commands' : `cat-${category}`)}
+                      onClick={() => toggleGroup(`cat-${category}`)}
                     >
                       <span className="w-1 h-1 rounded-full bg-neon-cyan/50" />
                       {category}
                       <span className="text-gray-500 text-[9px]">({groupedCommands[category]?.length || 0})</span>
-                      <svg className={`w-3 h-3 ml-auto transition-transform ${activeSection === `cat-${category}` ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-3 h-3 ml-auto transition-transform ${expandedGroups.has(`cat-${category}`) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
-                    {activeSection === `cat-${category}` && groupedCommands[category].map((cmd) => (
+                    {expandedGroups.has(`cat-${category}`) && groupedCommands[category].map((cmd) => (
                       <div
                         key={cmd._id}
                         className={`mx-2 px-3 py-2 flex items-center gap-3 cursor-pointer rounded-lg transition-all group ${
