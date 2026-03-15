@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import CustomSelect from './CustomSelect';
 
 function CommandModal({ command, onSave, onClose }) {
   const [formData, setFormData] = useState({
@@ -25,6 +26,15 @@ function CommandModal({ command, onSave, onClose }) {
     e.preventDefault();
     onSave(formData);
   };
+
+  const categoryOptions = [
+    { value: 'General', label: 'General' },
+    { value: 'System', label: 'System' },
+    { value: 'Network', label: 'Network' },
+    { value: 'Service', label: 'Service' },
+    { value: 'Docker', label: 'Docker' },
+    { value: 'Custom', label: 'Custom' },
+  ];
 
   return (
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 animate-fade-in" onClick={onClose}>
@@ -86,18 +96,11 @@ function CommandModal({ command, onSave, onClose }) {
 
             <div className="mb-4">
               <label className="block text-sm text-gray-400 mb-2">Category</label>
-              <select
-                className="input-neon w-full"
+              <CustomSelect
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              >
-                <option value="General">General</option>
-                <option value="System">System</option>
-                <option value="Network">Network</option>
-                <option value="Service">Service</option>
-                <option value="Docker">Docker</option>
-                <option value="Custom">Custom</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, category: value })}
+                options={categoryOptions}
+              />
             </div>
 
             <div className="mb-6">

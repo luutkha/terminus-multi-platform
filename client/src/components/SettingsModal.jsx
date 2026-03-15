@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store';
 import terminalThemes from '../styles/terminalThemes';
+import CustomSelect from './CustomSelect';
 
 function SettingsModal({ onClose }) {
   const { settings, updateSettings } = useStore();
@@ -34,6 +35,34 @@ function SettingsModal({ onClose }) {
     foreground: theme.foreground,
     accent: theme.blue || theme.cyan || theme.magenta
   }));
+
+  const fontFamilyOptions = [
+    { value: 'Consolas, monospace', label: 'Consolas' },
+    { value: 'Monaco, monospace', label: 'Monaco' },
+    { value: "'Courier New', monospace", label: 'Courier New' },
+    { value: 'Fira Code, monospace', label: 'Fira Code' },
+    { value: "'Source Code Pro', monospace", label: 'Source Code Pro' },
+    { value: 'JetBrains Mono, monospace', label: 'JetBrains Mono' },
+  ];
+
+  const fontWeightOptions = [
+    { value: 'normal', label: 'Normal' },
+    { value: 'bold', label: 'Bold' },
+  ];
+
+  const cursorStyleOptions = [
+    { value: 'block', label: 'Block' },
+    { value: 'underline', label: 'Underline' },
+    { value: 'bar', label: 'Bar' },
+  ];
+
+  const scrollbackOptions = [
+    { value: 5000, label: '5,000 lines' },
+    { value: 10000, label: '10,000 lines' },
+    { value: 25000, label: '25,000 lines' },
+    { value: 50000, label: '50,000 lines' },
+    { value: 100000, label: '100,000 lines' },
+  ];
 
   return (
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 animate-fade-in" onClick={onClose}>
@@ -82,13 +111,11 @@ function SettingsModal({ onClose }) {
                       className="w-full h-10 rounded-lg mb-2 relative overflow-hidden"
                       style={{ backgroundColor: theme.background }}
                     >
-                      {/* Mini terminal preview */}
                       <div className="absolute inset-0 flex items-center justify-center gap-0.5 px-1">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accent || theme.foreground }} />
                         <div className="w-4 h-1 rounded" style={{ backgroundColor: theme.foreground, opacity: 0.6 }} />
                         <div className="w-3 h-1 rounded" style={{ backgroundColor: theme.foreground, opacity: 0.3 }} />
                       </div>
-                      {/* Cursor */}
                       <div
                         className="absolute right-1.5 top-1/2 -translate-y-1/2 w-1.5 h-3 rounded-sm"
                         style={{ backgroundColor: theme.foreground }}
@@ -149,45 +176,31 @@ function SettingsModal({ onClose }) {
             {/* Font Family */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-400 mb-2">Font Family</label>
-              <select
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
+              <CustomSelect
                 value={formData.fontFamily || 'Consolas, monospace'}
-                onChange={(e) => setFormData({ ...formData, fontFamily: e.target.value })}
-              >
-                <option value="Consolas, monospace">Consolas</option>
-                <option value="Monaco, monospace">Monaco</option>
-                <option value="'Courier New', monospace">Courier New</option>
-                <option value="Fira Code, monospace">Fira Code</option>
-                <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                <option value="JetBrains Mono, monospace">JetBrains Mono</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, fontFamily: value })}
+                options={fontFamilyOptions}
+              />
             </div>
 
             {/* Font Weight */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-400 mb-2">Font Weight</label>
-              <select
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
+              <CustomSelect
                 value={formData.fontWeight || 'normal'}
-                onChange={(e) => setFormData({ ...formData, fontWeight: e.target.value })}
-              >
-                <option value="normal">Normal</option>
-                <option value="bold">Bold</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, fontWeight: value })}
+                options={fontWeightOptions}
+              />
             </div>
 
             {/* Cursor Style */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-400 mb-2">Cursor Style</label>
-              <select
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
+              <CustomSelect
                 value={formData.cursorStyle || 'block'}
-                onChange={(e) => setFormData({ ...formData, cursorStyle: e.target.value })}
-              >
-                <option value="block">Block</option>
-                <option value="underline">Underline</option>
-                <option value="bar">Bar</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, cursorStyle: value })}
+                options={cursorStyleOptions}
+              />
             </div>
 
             {/* Cursor Blink */}
@@ -206,17 +219,11 @@ function SettingsModal({ onClose }) {
             {/* Scrollback Buffer */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-400 mb-2">Scrollback Buffer</label>
-              <select
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-neon-purple transition-colors"
+              <CustomSelect
                 value={formData.scrollback || 10000}
-                onChange={(e) => setFormData({ ...formData, scrollback: parseInt(e.target.value) })}
-              >
-                <option value={5000}>5,000 lines</option>
-                <option value={10000}>10,000 lines</option>
-                <option value={25000}>25,000 lines</option>
-                <option value={50000}>50,000 lines</option>
-                <option value={100000}>100,000 lines</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, scrollback: value })}
+                options={scrollbackOptions}
+              />
             </div>
 
             <div className="flex gap-3 pt-4 border-t border-white/5">
