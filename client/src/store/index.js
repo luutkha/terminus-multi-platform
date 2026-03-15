@@ -95,7 +95,8 @@ export const useStore = create((set, get) => ({
     scrollback: 10000,
     cursorStyle: 'block',
     cursorBlink: true,
-    fontWeight: 'normal'
+    fontWeight: 'normal',
+    terminalTheme: 'defaultDark'
   },
 
   loadSettings: async () => {

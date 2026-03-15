@@ -62,7 +62,8 @@ const settingsSchema = new mongoose.Schema({
   scrollback: { type: Number, default: 10000 },
   cursorStyle: { type: String, default: 'block' },
   cursorBlink: { type: Boolean, default: true },
-  fontWeight: { type: String, default: 'normal' }
+  fontWeight: { type: String, default: 'normal' },
+  terminalTheme: { type: String, default: 'defaultDark' }
 });
 
 const Connection = mongoose.model('Connection', connectionSchema);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store';
+import terminalThemes from '../styles/terminalThemes';
 
 function SettingsModal({ onClose }) {
   const { settings, updateSettings } = useStore();
@@ -15,7 +16,7 @@ function SettingsModal({ onClose }) {
     onClose();
   };
 
-  const themes = [
+  const uiThemes = [
     { id: 'dark', name: 'Dark', color: '#1e1e1e' },
     { id: 'light', name: 'Light', color: '#ffffff' },
     { id: 'blue', name: 'Ocean', color: '#0ea5e9' },
@@ -26,11 +27,19 @@ function SettingsModal({ onClose }) {
     { id: 'pink', name: 'Pink', color: '#ec4899' },
   ];
 
+  const themeOptions = Object.entries(terminalThemes).map(([id, theme]) => ({
+    id,
+    name: theme.name,
+    background: theme.background,
+    foreground: theme.foreground,
+    accent: theme.blue || theme.cyan || theme.magenta
+  }));
+
   return (
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 animate-fade-in" onClick={onClose}>
-      <div className="bg-[#12121a] rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-neon-purple/10 animate-scale-in" onClick={e => e.stopPropagation()}>
+      <div className="bg-[#12121a] rounded-xl w-full max-w-2xl border border-white/10 shadow-2xl shadow-neon-purple/10 animate-scale-in max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-purple to-neon-cyan flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,13 +56,60 @@ function SettingsModal({ onClose }) {
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           <form onSubmit={handleSubmit}>
-            {/* Theme Selection */}
+            {/* Terminal Theme Selection */}
+            <div className="mb-8">
+              <label className="block text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Terminal Theme
+              </label>
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
+                {themeOptions.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, terminalTheme: theme.id })}
+                    className={`p-2 rounded-xl border-2 transition-all ${
+                      formData.terminalTheme === theme.id
+                        ? 'border-neon-purple bg-white/5 shadow-neon-purple/20'
+                        : 'border-white/10 hover:border-white/20 bg-white/5'
+                    }`}
+                  >
+                    <div
+                      className="w-full h-10 rounded-lg mb-2 relative overflow-hidden"
+                      style={{ backgroundColor: theme.background }}
+                    >
+                      {/* Mini terminal preview */}
+                      <div className="absolute inset-0 flex items-center justify-center gap-0.5 px-1">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accent || theme.foreground }} />
+                        <div className="w-4 h-1 rounded" style={{ backgroundColor: theme.foreground, opacity: 0.6 }} />
+                        <div className="w-3 h-1 rounded" style={{ backgroundColor: theme.foreground, opacity: 0.3 }} />
+                      </div>
+                      {/* Cursor */}
+                      <div
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-1.5 h-3 rounded-sm"
+                        style={{ backgroundColor: theme.foreground }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-gray-400 block truncate">{theme.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* UI Theme Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-400 mb-3">Theme Color</label>
+              <label className="block text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                UI Theme Color
+              </label>
               <div className="grid grid-cols-4 gap-3">
-                {themes.map((theme) => (
+                {uiThemes.map((theme) => (
                   <button
                     key={theme.id}
                     type="button"
@@ -163,7 +219,7 @@ function SettingsModal({ onClose }) {
               </select>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-4 border-t border-white/5">
               <button type="submit" className="flex-1 px-4 py-3 bg-gradient-to-r from-neon-purple to-neon-pink hover:shadow-lg hover:shadow-neon-purple/30 text-white rounded-xl transition-all font-medium">
                 Save Changes
               </button>

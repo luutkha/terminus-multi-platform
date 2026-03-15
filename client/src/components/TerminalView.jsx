@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
+import terminalThemes from '../styles/terminalThemes';
 
 // Store terminals globally
 const terminals = new Map();
@@ -9,10 +10,25 @@ const terminals = new Map();
 // Get all active tab IDs
 const getActiveTabIds = (tabs) => new Set(tabs.map(t => t.id));
 
+// Default theme
+const defaultTheme = terminalThemes.defaultDark;
+
 function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
   const containerRef = useRef(null);
   const activeTab = tabs.find(t => t.id === activeTabId);
   const activeTabIdsRef = useRef(new Set());
+  const settingsRef = useRef(settings);
+
+  // Update settings ref when settings change
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  // Get terminal theme based on settings
+  const getTerminalTheme = useCallback(() => {
+    const themeName = settingsRef.current?.terminalTheme || 'defaultDark';
+    return terminalThemes[themeName] || defaultTheme;
+  }, []);
 
   // Update active tab IDs whenever tabs change
   useEffect(() => {
@@ -46,17 +62,21 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       return terminals.get(tabId);
     }
 
+    const theme = getTerminalTheme();
+    const fontSize = settingsRef.current?.fontSize || 14;
+    const fontFamily = settingsRef.current?.fontFamily || 'Consolas, monospace';
+    const cursorBlink = settingsRef.current?.cursorBlink !== false;
+    const scrollback = settingsRef.current?.scrollback || 10000;
+
     const term = new Terminal({
-      fontSize: 14,
-      fontFamily: 'Consolas, monospace',
-      theme: {
-        background: '#1e1e1e',
-        foreground: '#cccccc',
-        cursor: '#cccccc',
-        cursorAccent: '#1e1e1e'
-      },
-      cursorBlink: true,
-      scrollback: 10000
+      fontSize,
+      fontFamily,
+      theme,
+      cursorBlink,
+      cursorStyle: settingsRef.current?.cursorStyle || 'block',
+      scrollback,
+      allowTransparency: false,
+      convertEol: true
     });
 
     const fit = new FitAddon();
@@ -65,7 +85,7 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     terminals.set(tabId, { terminal: term, fitAddon: fit, sessionId: null });
 
     return terminals.get(tabId);
-  }, []);
+  }, [getTerminalTheme]);
 
   // Set up terminal when activeTab changes
   useEffect(() => {
@@ -93,6 +113,14 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       fitAddon.fit();
     }
 
+    // Apply theme in case it changed
+    const theme = getTerminalTheme();
+    terminal.options.theme = theme;
+    terminal.options.fontSize = settingsRef.current?.fontSize || 14;
+    terminal.options.fontFamily = settingsRef.current?.fontFamily || 'Consolas, monospace';
+    terminal.options.cursorBlink = settingsRef.current?.cursorBlink !== false;
+    terminal.options.cursorStyle = settingsRef.current?.cursorStyle || 'block';
+
     // Show this terminal, hide others
     terminals.forEach((obj, id) => {
       const el = document.getElementById(`terminal-${id}`);
@@ -105,7 +133,7 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     terminal.refresh(0, terminal.rows - 1);
     fitAddon.fit();
 
-  }, [activeTabId, activeTab, createTerminalForTab]);
+  }, [activeTabId, activeTab, createTerminalForTab, getTerminalTheme]);
 
   // Handle input and session changes
   useEffect(() => {
@@ -207,19 +235,28 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
 
   if (!activeTab) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-dark-950">
-        <div className="text-center">
-          <div className="text-4xl mb-4">🖥</div>
-          <div className="text-dark-400">
-            No terminal open. Click + to create a new terminal.
+      <div className="flex-1 flex items-center justify-center bg-[#0a0a0f]">
+        <div className="text-center animate-fade-in">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-neon-purple/20 to-neon-cyan/20 flex items-center justify-center">
+            <svg className="w-10 h-10 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div className="text-gray-500 text-lg font-medium mb-2">
+            No terminal open
+          </div>
+          <div className="text-gray-600 text-sm">
+            Click the + button to create a new terminal
           </div>
         </div>
       </div>
     );
   }
 
+  const theme = getTerminalTheme();
+
   return (
-    <div className="flex-1 p-2 bg-dark-950 overflow-hidden">
+    <div className="flex-1 p-1 overflow-hidden" style={{ backgroundColor: theme.background }}>
       <div ref={containerRef} className="w-full h-full" />
     </div>
   );
