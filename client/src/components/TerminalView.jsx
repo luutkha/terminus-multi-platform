@@ -127,10 +127,8 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       container.style.width = '100%';
       container.style.height = '100%';
       containerRef.current.appendChild(container);
-    }
 
-    // Open terminal if not opened
-    if (!terminal.element) {
+      // Open terminal in the new container
       terminal.open(container);
       fitAddon.fit();
     }

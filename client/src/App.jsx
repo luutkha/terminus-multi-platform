@@ -512,9 +512,7 @@ function App() {
           />
 
           {/* Content */}
-          {isDashboard ? (
-            <Dashboard onConnect={connectSSH} />
-          ) : (
+          <div className="flex-1 overflow-hidden relative">
             <TerminalView
               tabs={tabs}
               activeTabId={activeTabId}
@@ -522,7 +520,12 @@ function App() {
               onResize={handleTerminalResize}
               settings={settings}
             />
-          )}
+            {isDashboard && (
+              <div className="absolute inset-0 z-10">
+                <Dashboard onConnect={connectSSH} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
