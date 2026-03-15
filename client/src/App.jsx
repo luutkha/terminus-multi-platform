@@ -13,6 +13,7 @@ import ConnectionForm from './components/ConnectionForm';
 import CommandModal from './components/CommandModal';
 import CommandGroupModal from './components/CommandGroupModal';
 import AuthModal from './components/AuthModal';
+import TerminalListModal from './components/TerminalListModal';
 
 const BACKEND_URL = 'http://localhost:3001';
 
@@ -31,7 +32,22 @@ function App() {
   const [connectingId, setConnectingId] = useState(null);
   const [alert, setAlert] = useState(null);
   const [duplicateModal, setDuplicateModal] = useState(null);
+  const [showTerminalList, setShowTerminalList] = useState(false);
   const activeTabRef = useRef(null);
+
+  // Keyboard shortcut for terminal list modal (Ctrl+` or Ctrl+Shift+\)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+` or Ctrl+Shift+\
+      if (e.ctrlKey && (e.key === '`' || e.key === '\\')) {
+        e.preventDefault();
+        setShowTerminalList(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const {
     tabs,
@@ -482,6 +498,27 @@ function App() {
     return <AuthModal onAuth={handleAuth} error={authError} />;
   }
 
+  // Full-screen terminal list mode (hides header/sidebar, shows tabs + terminal content)
+  if (showTerminalList) {
+    return (
+      <TerminalListModal
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelectTab={setActiveTab}
+        onClose={() => setShowTerminalList(false)}
+        onNewTab={createTerminal}
+      >
+        <TerminalView
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onInput={handleTerminalInput}
+          onResize={handleTerminalResize}
+          settings={settings}
+        />
+      </TerminalListModal>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden relative">
       {/* Animated background gradient */}
@@ -525,6 +562,18 @@ function App() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTerminalList(true)}
+            className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-white/10"
+            title="Terminal List (Ctrl+`)"
+          >
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+              Tabs
+            </span>
+          </button>
           <button
             onClick={openDashboard}
             className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-white/10"
