@@ -101,7 +101,8 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       }
     });
 
-    // Fit terminal
+    // Refresh and fit terminal when becoming active
+    terminal.refresh(0, terminal.rows - 1);
     fitAddon.fit();
 
   }, [activeTabId, activeTab, createTerminalForTab]);
@@ -113,15 +114,18 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     const terminalObj = terminals.get(activeTab.id);
     const { terminal } = terminalObj;
 
-    // Dispose old input handler if exists (prevents duplicate handlers on reconnect)
-    if (terminalObj.inputDisposable) {
-      terminalObj.inputDisposable.dispose();
+    // Only clear if this is a completely new session (never had a session before)
+    const isNewSession = !terminalObj.sessionId && activeTab.sessionId;
+    if (isNewSession) {
+      terminal.clear();
     }
 
-    // Clear terminal on new session
-    if (terminalObj.sessionId !== activeTab.sessionId) {
-      terminal.clear();
-      terminalObj.sessionId = activeTab.sessionId;
+    // Update sessionId
+    terminalObj.sessionId = activeTab.sessionId;
+
+    // Dispose old input handler if exists
+    if (terminalObj.inputDisposable) {
+      terminalObj.inputDisposable.dispose();
     }
 
     // Set up input handler

@@ -8,11 +8,21 @@ function TabBar({ tabs, activeTabId, onTabClick, onTabClose, onNewTab }) {
             tab.id === activeTabId
               ? 'bg-dark-950 text-dark-100 border-b-2 border-b-blue-600'
               : 'text-dark-400 hover:bg-dark-800 hover:text-dark-200'
-          }`}
+          } ${tab.connecting ? 'opacity-70' : ''}`}
           onClick={() => onTabClick(tab.id)}
         >
-          <span className="text-xs">{tab.type === 'ssh' ? '🔒' : '🖥'}</span>
+          {tab.connecting ? (
+            <svg className="w-4 h-4 animate-spin text-blue-400" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            <span className="text-xs">{tab.type === 'ssh' ? '🔒' : '🖥'}</span>
+          )}
           <span className="truncate max-w-32">{tab.title}</span>
+          {tab.connecting && (
+            <span className="text-xs text-blue-400">Connecting...</span>
+          )}
           <button
             className="ml-1 p-0.5 text-dark-400 hover:text-dark-100 hover:bg-dark-700 rounded transition-colors opacity-0 group-hover:opacity-100"
             onClick={(e) => {

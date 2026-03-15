@@ -27,7 +27,10 @@ app.use(express.json());
 
 // MongoDB Connection
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
+  .then(async () => {
+    console.log('Connected to MongoDB');
+    await initDefaultCommands();
+  })
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Mongoose Schemas
@@ -45,6 +48,9 @@ const connectionSchema = new mongoose.Schema({
 const commandSchema = new mongoose.Schema({
   name: String,
   command: String,
+  description: String,
+  category: { type: String, default: 'General' },
+  enabled: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -52,7 +58,11 @@ const settingsSchema = new mongoose.Schema({
   fontSize: { type: Number, default: 14 },
   fontFamily: { type: String, default: 'Consolas, monospace' },
   theme: { type: String, default: 'dark' },
-  scrollback: { type: Number, default: 10000 }
+  themeColor: { type: String, default: '#0ea5e9' },
+  scrollback: { type: Number, default: 10000 },
+  cursorStyle: { type: String, default: 'block' },
+  cursorBlink: { type: Boolean, default: true },
+  fontWeight: { type: String, default: 'normal' }
 });
 
 const Connection = mongoose.model('Connection', connectionSchema);
@@ -403,6 +413,38 @@ app.delete('/api/commands/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.put('/api/commands/:id', async (req, res) => {
+  try {
+    const command = await Command.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(command);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Initialize default commands if none exist
+const initDefaultCommands = async () => {
+  const count = await Command.countDocuments();
+  if (count === 0) {
+    const defaultCommands = [
+      { name: 'System Info', command: 'uname -a && uptime', description: 'Show system information', category: 'System' },
+      { name: 'Disk Usage', command: 'df -h', description: 'Show disk usage', category: 'System' },
+      { name: 'Memory Usage', command: 'free -m', description: 'Show memory usage', category: 'System' },
+      { name: 'Process List', command: 'ps aux | head -20', description: 'Show running processes', category: 'System' },
+      { name: 'Network Info', command: 'ip addr && netstat -tuln', description: 'Show network information', category: 'Network' },
+      { name: 'Last Logins', command: 'last -10', description: 'Show last 10 logins', category: 'System' },
+      { name: 'Service Status', command: 'systemctl list-units --type=service --state=running | head -20', description: 'Show running services', category: 'Service' },
+      { name: 'CPU Info', command: 'lscpu', description: 'Show CPU information', category: 'System' },
+    ];
+    await Command.insertMany(defaultCommands);
+    console.log('[Backend] Default commands initialized');
+  }
+};
 
 // Settings
 app.get('/api/settings', async (req, res) => {

@@ -77,12 +77,25 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  updateCommand: async (id, updates) => {
+    try {
+      await axios.put(`${BACKEND_URL}/api/commands/${id}`, updates);
+      await get().loadCommands();
+    } catch (error) {
+      console.error('Error updating command:', error);
+    }
+  },
+
   // Settings state
   settings: {
     fontSize: 14,
     fontFamily: 'Consolas, monospace',
     theme: 'dark',
-    scrollback: 10000
+    themeColor: '#0ea5e9',
+    scrollback: 10000,
+    cursorStyle: 'block',
+    cursorBlink: true,
+    fontWeight: 'normal'
   },
 
   loadSettings: async () => {
