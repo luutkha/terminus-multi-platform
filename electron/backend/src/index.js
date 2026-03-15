@@ -54,6 +54,13 @@ const commandSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const commandGroupSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  color: { type: String, default: '#a855f7' },
+  order: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
+
 const settingsSchema = new mongoose.Schema({
   fontSize: { type: Number, default: 14 },
   fontFamily: { type: String, default: 'Consolas, monospace' },
@@ -68,6 +75,7 @@ const settingsSchema = new mongoose.Schema({
 
 const Connection = mongoose.model('Connection', connectionSchema);
 const Command = mongoose.model('Command', commandSchema);
+const CommandGroup = mongoose.model('CommandGroup', commandGroupSchema);
 const Settings = mongoose.model('Settings', settingsSchema);
 
 // Terminal sessions storage
@@ -424,6 +432,48 @@ app.put('/api/commands/:id', async (req, res) => {
       { new: true }
     );
     res.json(command);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Command Groups
+app.get('/api/command-groups', async (req, res) => {
+  try {
+    const groups = await CommandGroup.find().sort({ order: 1 });
+    res.json(groups);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/command-groups', async (req, res) => {
+  try {
+    const group = new CommandGroup(req.body);
+    await group.save();
+    res.json(group);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/command-groups/:id', async (req, res) => {
+  try {
+    await CommandGroup.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/command-groups/:id', async (req, res) => {
+  try {
+    const group = await CommandGroup.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(group);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

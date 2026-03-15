@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 function Sidebar({
   connections,
   commands,
+  commandGroups,
   onConnect,
   onAddConnection,
   onEditConnection,
@@ -11,6 +12,9 @@ function Sidebar({
   onEditCommand,
   onDeleteCommand,
   onExecuteCommand,
+  onAddCommandGroup,
+  onEditCommandGroup,
+  onDeleteCommandGroup,
   collapsed,
   onToggleCollapse,
   connectingId
@@ -37,6 +41,12 @@ function Sidebar({
     setContextMenuType(type);
   };
 
+  // Handle adding new command group from the header
+  const handleAddGroupFromHeader = (e) => {
+    e.stopPropagation();
+    onAddCommandGroup();
+  };
+
   const handleCloseContextMenu = () => {
     setContextMenu(null);
     setContextMenuType(null);
@@ -49,6 +59,14 @@ function Sidebar({
     acc[category].push(cmd);
     return acc;
   }, {});
+
+  // Get custom groups sorted by order
+  const sortedGroups = [...commandGroups].sort((a, b) => a.order - b.order);
+
+  // Separate uncategorized commands from custom groups
+  const uncategorizedCommands = groupedCommands['General'] || [];
+  const customGroupNames = sortedGroups.map(g => g.name);
+  const otherCategories = Object.keys(groupedCommands).filter(cat => !customGroupNames.includes(cat));
 
   if (collapsed) {
     return (
@@ -200,29 +218,141 @@ function Sidebar({
                 </svg>
                 Commands ({commands.length})
               </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddCommand();
-                }}
-                className="p-1 hover:bg-white/10 rounded opacity-0 group-hover:opacity-100 transition-all"
-                title="Add Command"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleAddGroupFromHeader}
+                  className="p-1 hover:bg-white/10 rounded opacity-0 group-hover:opacity-100 transition-all"
+                  title="Add Group"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddCommand();
+                  }}
+                  className="p-1 hover:bg-white/10 rounded opacity-0 group-hover:opacity-100 transition-all"
+                  title="Add Command"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {activeSection === 'commands' && (
               <div className="animate-slide-up">
-                {Object.entries(groupedCommands).map(([category, cmds]) => (
+                {/* Custom Groups */}
+                {sortedGroups.map((group) => {
+                  const groupCommands = groupedCommands[group.name] || [];
+                  return (
+                    <div key={group._id}>
+                      <div
+                        className="px-4 py-1.5 text-[10px] text-gray-600 uppercase font-medium tracking-wider flex items-center gap-2 cursor-pointer hover:bg-white/5"
+                        onClick={() => setActiveSection(activeSection === `group-${group._id}` ? 'commands' : `group-${group._id}`)}
+                        onContextMenu={(e) => handleContextMenu(e, group, 'commandGroup')}
+                      >
+                        <span
+                          className="w-1 h-1 rounded-full"
+                          style={{ backgroundColor: group.color }}
+                        />
+                        <span>{group.name}</span>
+                        <span className="text-gray-500 text-[9px]">({groupCommands.length})</span>
+                        <svg className={`w-3 h-3 ml-auto transition-transform ${activeSection === `group-${group._id}` ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                      {activeSection === `group-${group._id}` && groupCommands.map((cmd) => (
+                        <div
+                          key={cmd._id}
+                          className={`mx-2 px-3 py-2 flex items-center gap-3 cursor-pointer rounded-lg transition-all group ${
+                            !cmd.enabled ? 'opacity-40' : 'hover:bg-white/5'
+                          }`}
+                          onClick={() => cmd.enabled && onExecuteCommand && onExecuteCommand(cmd)}
+                          onContextMenu={(e) => handleContextMenu(e, cmd, 'command')}
+                        >
+                          <div className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
+                            !cmd.enabled ? 'bg-white/5' : 'bg-gradient-to-br from-neon-pink/20 to-neon-purple/20 group-hover:from-neon-pink/30 group-hover:to-neon-purple/30'
+                          }`}>
+                            <svg className={`w-3.5 h-3.5 ${!cmd.enabled ? 'text-gray-600' : 'text-neon-pink'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-sm truncate ${!cmd.enabled ? 'text-gray-600' : 'text-gray-200 group-hover:text-white'}`}>
+                              {cmd.name}
+                            </div>
+                            {cmd.description && (
+                              <div className="text-[11px] text-gray-600 truncate">{cmd.description}</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+
+                {/* Uncategorized/General commands */}
+                {uncategorizedCommands.length > 0 && (
+                  <div key="uncategorized">
+                    <div
+                      className="px-4 py-1.5 text-[10px] text-gray-600 uppercase font-medium tracking-wider flex items-center gap-2 cursor-pointer hover:bg-white/5"
+                      onClick={() => setActiveSection(activeSection === 'uncategorized' ? 'commands' : 'uncategorized')}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-neon-cyan/50" />
+                      Uncategorized
+                      <span className="text-gray-500 text-[9px]">({uncategorizedCommands.length})</span>
+                      <svg className={`w-3 h-3 ml-auto transition-transform ${activeSection === 'uncategorized' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    {activeSection === 'uncategorized' && uncategorizedCommands.map((cmd) => (
+                      <div
+                        key={cmd._id}
+                        className={`mx-2 px-3 py-2 flex items-center gap-3 cursor-pointer rounded-lg transition-all group ${
+                          !cmd.enabled ? 'opacity-40' : 'hover:bg-white/5'
+                        }`}
+                        onClick={() => cmd.enabled && onExecuteCommand && onExecuteCommand(cmd)}
+                        onContextMenu={(e) => handleContextMenu(e, cmd, 'command')}
+                      >
+                        <div className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
+                          !cmd.enabled ? 'bg-white/5' : 'bg-gradient-to-br from-neon-pink/20 to-neon-purple/20 group-hover:from-neon-pink/30 group-hover:to-neon-purple/30'
+                        }`}>
+                          <svg className={`w-3.5 h-3.5 ${!cmd.enabled ? 'text-gray-600' : 'text-neon-pink'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-sm truncate ${!cmd.enabled ? 'text-gray-600' : 'text-gray-200 group-hover:text-white'}`}>
+                            {cmd.name}
+                          </div>
+                          {cmd.description && (
+                            <div className="text-[11px] text-gray-600 truncate">{cmd.description}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Other categories not in custom groups */}
+                {otherCategories.map((category) => (
                   <div key={category}>
-                    <div className="px-4 py-1.5 text-[10px] text-gray-600 uppercase font-medium tracking-wider flex items-center gap-2">
+                    <div
+                      className="px-4 py-1.5 text-[10px] text-gray-600 uppercase font-medium tracking-wider flex items-center gap-2 cursor-pointer hover:bg-white/5"
+                      onClick={() => setActiveSection(activeSection === `cat-${category}` ? 'commands' : `cat-${category}`)}
+                    >
                       <span className="w-1 h-1 rounded-full bg-neon-cyan/50" />
                       {category}
+                      <span className="text-gray-500 text-[9px]">({groupedCommands[category]?.length || 0})</span>
+                      <svg className={`w-3 h-3 ml-auto transition-transform ${activeSection === `cat-${category}` ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
                     </div>
-                    {cmds.map((cmd) => (
+                    {activeSection === `cat-${category}` && groupedCommands[category].map((cmd) => (
                       <div
                         key={cmd._id}
                         className={`mx-2 px-3 py-2 flex items-center gap-3 cursor-pointer rounded-lg transition-all group ${
@@ -250,6 +380,7 @@ function Sidebar({
                     ))}
                   </div>
                 ))}
+
                 {commands.length === 0 && (
                   <div className="px-4 py-6 text-center">
                     <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-white/5 flex items-center justify-center">
@@ -340,6 +471,47 @@ function Sidebar({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 Delete
+              </button>
+            </>
+          )}
+          {contextMenuType === 'commandGroup' && (
+            <>
+              <button
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-white/5 transition-colors flex items-center gap-3 text-gray-300 hover:text-white"
+                onClick={() => {
+                  onEditCommandGroup(contextMenu.item);
+                  handleCloseContextMenu();
+                }}
+              >
+                <svg className="w-4 h-4 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Group
+              </button>
+              <button
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-white/5 transition-colors flex items-center gap-3 text-gray-300 hover:text-white"
+                onClick={() => {
+                  onAddCommand();
+                  handleCloseContextMenu();
+                }}
+              >
+                <svg className="w-4 h-4 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Command
+              </button>
+              <div className="my-1 border-t border-white/5" />
+              <button
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-neon-red/10 transition-colors flex items-center gap-3 text-neon-red"
+                onClick={() => {
+                  onDeleteCommandGroup(contextMenu.item._id);
+                  handleCloseContextMenu();
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Group
               </button>
             </>
           )}

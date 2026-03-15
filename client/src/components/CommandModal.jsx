@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
+import { useStore } from '../store';
 
 function CommandModal({ command, onSave, onClose }) {
+  const commandGroups = useStore(state => state.commandGroups);
+
   const [formData, setFormData] = useState({
     name: '',
     command: '',
@@ -27,13 +30,17 @@ function CommandModal({ command, onSave, onClose }) {
     onSave(formData);
   };
 
-  const categoryOptions = [
+  const defaultOptions = [
     { value: 'General', label: 'General' },
     { value: 'System', label: 'System' },
     { value: 'Network', label: 'Network' },
     { value: 'Service', label: 'Service' },
     { value: 'Docker', label: 'Docker' },
-    { value: 'Custom', label: 'Custom' },
+  ];
+
+  const categoryOptions = [
+    ...defaultOptions,
+    ...commandGroups.map(g => ({ value: g.name, label: g.name }))
   ];
 
   return (

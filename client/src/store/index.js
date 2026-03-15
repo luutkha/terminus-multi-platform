@@ -86,6 +86,45 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  // Command Groups state
+  commandGroups: [],
+
+  loadCommandGroups: async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/command-groups`);
+      set({ commandGroups: response.data });
+    } catch (error) {
+      console.error('Error loading command groups:', error);
+    }
+  },
+
+  addCommandGroup: async (group) => {
+    try {
+      await axios.post(`${BACKEND_URL}/api/command-groups`, group);
+      await get().loadCommandGroups();
+    } catch (error) {
+      console.error('Error adding command group:', error);
+    }
+  },
+
+  deleteCommandGroup: async (id) => {
+    try {
+      await axios.delete(`${BACKEND_URL}/api/command-groups/${id}`);
+      await get().loadCommandGroups();
+    } catch (error) {
+      console.error('Error deleting command group:', error);
+    }
+  },
+
+  updateCommandGroup: async (id, updates) => {
+    try {
+      await axios.put(`${BACKEND_URL}/api/command-groups/${id}`, updates);
+      await get().loadCommandGroups();
+    } catch (error) {
+      console.error('Error updating command group:', error);
+    }
+  },
+
   // Settings state
   settings: {
     fontSize: 14,

@@ -11,6 +11,7 @@ import Dashboard from './components/Dashboard';
 import SettingsModal from './components/SettingsModal';
 import ConnectionForm from './components/ConnectionForm';
 import CommandModal from './components/CommandModal';
+import CommandGroupModal from './components/CommandGroupModal';
 import AuthModal from './components/AuthModal';
 
 const BACKEND_URL = 'http://localhost:3001';
@@ -22,8 +23,10 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showConnectionForm, setShowConnectionForm] = useState(false);
   const [showCommandForm, setShowCommandForm] = useState(false);
+  const [showCommandGroupForm, setShowCommandGroupForm] = useState(false);
   const [editingConnection, setEditingConnection] = useState(null);
   const [editingCommand, setEditingCommand] = useState(null);
+  const [editingCommandGroup, setEditingCommandGroup] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [connectingId, setConnectingId] = useState(null);
   const [alert, setAlert] = useState(null);
@@ -39,10 +42,14 @@ function App() {
     setActiveTab,
     connections,
     commands,
+    commandGroups,
     settings,
     loadConnections,
     loadSettings,
     loadCommands,
+    loadCommandGroups,
+    addCommandGroup,
+    deleteCommandGroup,
     addCommand,
     updateCommand,
     deleteCommand
@@ -142,7 +149,8 @@ function App() {
       await Promise.all([
         loadConnections(),
         loadSettings(),
-        loadCommands()
+        loadCommands(),
+        loadCommandGroups()
       ]);
     } catch (error) {
       console.error('[App] Error loading data:', error);
@@ -350,6 +358,39 @@ function App() {
     }
   };
 
+  // Add/Edit command group
+  const handleAddCommandGroup = () => {
+    setEditingCommandGroup(null);
+    setShowCommandGroupForm(true);
+  };
+
+  const handleEditCommandGroup = (group) => {
+    setEditingCommandGroup(group);
+    setShowCommandGroupForm(true);
+  };
+
+  const handleSaveCommandGroup = async (groupData) => {
+    try {
+      if (editingCommandGroup) {
+        await useStore.getState().updateCommandGroup(editingCommandGroup._id, groupData);
+      } else {
+        await addCommandGroup(groupData);
+      }
+      setShowCommandGroupForm(false);
+      setEditingCommandGroup(null);
+    } catch (error) {
+      console.error('[App] Error saving command group:', error);
+    }
+  };
+
+  const handleDeleteCommandGroup = async (id) => {
+    try {
+      await deleteCommandGroup(id);
+    } catch (error) {
+      console.error('[App] Error deleting command group:', error);
+    }
+  };
+
   // Handle duplicate connection modal
   const handleGoToExisting = () => {
     if (duplicateModal) {
@@ -487,6 +528,7 @@ function App() {
         <Sidebar
           connections={connections}
           commands={commands}
+          commandGroups={commandGroups}
           onConnect={connectSSH}
           onAddConnection={handleAddConnection}
           onEditConnection={handleEditConnection}
@@ -495,6 +537,9 @@ function App() {
           onEditCommand={handleEditCommand}
           onDeleteCommand={handleDeleteCommand}
           onExecuteCommand={handleExecuteCommand}
+          onAddCommandGroup={handleAddCommandGroup}
+          onEditCommandGroup={handleEditCommandGroup}
+          onDeleteCommandGroup={handleDeleteCommandGroup}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           connectingId={connectingId}
@@ -552,6 +597,17 @@ function App() {
           onClose={() => {
             setShowCommandForm(false);
             setEditingCommand(null);
+          }}
+        />
+      )}
+
+      {showCommandGroupForm && (
+        <CommandGroupModal
+          group={editingCommandGroup}
+          onSave={handleSaveCommandGroup}
+          onClose={() => {
+            setShowCommandGroupForm(false);
+            setEditingCommandGroup(null);
           }}
         />
       )}
