@@ -136,41 +136,42 @@ io.on('connection', (socket) => {
         terminalSessions.delete(sessionId);
       });
 
-      // Handle terminal input from client
-      socket.on('terminal:input', ({ sessionId, data }) => {
-        console.log('[Backend] terminal:input received:', sessionId, 'data:', data);
-        const session = terminalSessions.get(sessionId);
-        console.log('[Backend] Session found:', !!session);
-        if (session && session.pty) {
-          session.pty.write(data);
-          console.log('[Backend] Written to PTY');
-        } else {
-          console.log('[Backend] Session not found or no PTY');
-        }
-      });
-
-      // Handle terminal resize
-      socket.on('terminal:resize', ({ sessionId, cols, rows }) => {
-        const session = terminalSessions.get(sessionId);
-        if (session && session.pty) {
-          session.pty.resize(cols, rows);
-        }
-      });
-
-      // Handle terminal close
-      socket.on('terminal:close', ({ sessionId }) => {
-        const session = terminalSessions.get(sessionId);
-        if (session) {
-          session.pty.kill();
-          terminalSessions.delete(sessionId);
-        }
-      });
-
       socket.emit('terminal:created', { sessionId });
       console.log('Terminal created:', sessionId);
     } catch (error) {
       console.error('Error creating terminal:', error);
       socket.emit('terminal:error', { error: error.message });
+    }
+  });
+
+  // Handle terminal input from client - registered once per socket
+  socket.on('terminal:input', ({ sessionId, data }) => {
+    console.log('[Backend] terminal:input received:', sessionId, 'data:', data);
+    const session = terminalSessions.get(sessionId);
+    console.log('[Backend] Session found:', !!session);
+    // Verify the session belongs to this socket
+    if (session && session.socketId === socket.id && session.pty) {
+      session.pty.write(data);
+      console.log('[Backend] Written to PTY');
+    } else {
+      console.log('[Backend] Session not found or no PTY');
+    }
+  });
+
+  // Handle terminal resize - registered once per socket
+  socket.on('terminal:resize', ({ sessionId, cols, rows }) => {
+    const session = terminalSessions.get(sessionId);
+    if (session && session.socketId === socket.id && session.pty) {
+      session.pty.resize(cols, rows);
+    }
+  });
+
+  // Handle terminal close - registered once per socket
+  socket.on('terminal:close', ({ sessionId }) => {
+    const session = terminalSessions.get(sessionId);
+    if (session && session.socketId === socket.id) {
+      session.pty.kill();
+      terminalSessions.delete(sessionId);
     }
   });
 
