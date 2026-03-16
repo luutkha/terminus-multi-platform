@@ -3,6 +3,9 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useStore } from './store';
 
+// Check if running in Electron
+const isElectron = window.electronAPI !== undefined;
+
 // Components
 import Sidebar from './components/Sidebar';
 import TabBar from './components/TabBar';
@@ -32,6 +35,7 @@ function App() {
   const [alert, setAlert] = useState(null);
   const [duplicateModal, setDuplicateModal] = useState(null);
   const [showTerminalList, setShowTerminalList] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const activeTabRef = useRef(null);
 
   const {
@@ -178,6 +182,13 @@ function App() {
     };
   }, []);
 
+  // Check window maximize state
+  useEffect(() => {
+    if (isElectron) {
+      window.electronAPI.isMaximized().then(setIsMaximized);
+    }
+  }, []);
+
   // Load initial data
   const loadData = async () => {
     try {
@@ -189,6 +200,26 @@ function App() {
       ]);
     } catch (error) {
       console.error('[App] Error loading data:', error);
+    }
+  };
+
+  // Window controls
+  const handleMinimize = () => {
+    if (isElectron) {
+      window.electronAPI.minimizeWindow();
+    }
+  };
+
+  const handleMaximize = () => {
+    if (isElectron) {
+      window.electronAPI.maximizeWindow();
+      setIsMaximized(!isMaximized);
+    }
+  };
+
+  const handleClose = () => {
+    if (isElectron) {
+      window.electronAPI.closeWindow();
     }
   };
 
@@ -542,7 +573,7 @@ function App() {
 
       {/* Header - hidden in focus mode */}
       {!showTerminalList && (
-      <header className="flex items-center justify-between px-4 py-3 bg-[#0a0a0f]/90 backdrop-blur-sm border-b border-white/5">
+      <header className="flex items-center justify-between px-4 py-3 bg-[#0a0a0f]/90 backdrop-blur-sm border-b border-white/5 select-none">
         <div className="flex items-center gap-3">
           <button
             onClick={openDashboard}
@@ -594,6 +625,44 @@ function App() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
+          {/* Window Controls */}
+          {isElectron && (
+            <div className="flex items-center ml-2">
+              <button
+                onClick={handleMinimize}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                title="Minimize"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
+              </button>
+              <button
+                onClick={handleMaximize}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                title={isMaximized ? "Restore" : "Maximize"}
+              >
+                {isMaximized ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 4h8a4 4 0 014 4v8M4 8v8a4 4 0 004 4h8" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={handleClose}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                title="Close"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </header>
       )}
@@ -652,9 +721,47 @@ function App() {
               </svg>
             </div>
           </button>
+          {/* Window Controls */}
+          {isElectron && (
+            <div className="flex items-center ml-2">
+              <button
+                onClick={handleMinimize}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                title="Minimize"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
+              </button>
+              <button
+                onClick={handleMaximize}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                title={isMaximized ? "Restore" : "Maximize"}
+              >
+                {isMaximized ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 4h8a4 4 0 014 4v8M4 8v8a4 4 0 004 4h8" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={handleClose}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                title="Close"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
           <button
             onClick={() => setShowTerminalList(false)}
-            className="ml-auto px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all flex items-center gap-2"
+            className="ml-2 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all flex items-center gap-2"
           >
             <span>Exit Focus</span>
             <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs text-gray-400">Esc</kbd>
