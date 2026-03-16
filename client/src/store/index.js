@@ -135,7 +135,8 @@ export const useStore = create((set, get) => ({
     cursorStyle: 'block',
     cursorBlink: true,
     fontWeight: 'normal',
-    terminalTheme: 'defaultDark'
+    terminalTheme: 'defaultDark',
+    defaultShell: ''
   },
 
   loadSettings: async () => {
@@ -153,6 +154,18 @@ export const useStore = create((set, get) => ({
       set({ settings: response.data });
     } catch (error) {
       console.error('Error updating settings:', error);
+    }
+  },
+
+  // Available shells
+  availableShells: [],
+
+  loadAvailableShells: async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/shells`);
+      set({ availableShells: response.data });
+    } catch (error) {
+      console.error('Error loading available shells:', error);
     }
   }
 }));

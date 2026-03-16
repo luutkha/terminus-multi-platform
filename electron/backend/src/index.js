@@ -70,7 +70,8 @@ const settingsSchema = new mongoose.Schema({
   cursorStyle: { type: String, default: 'block' },
   cursorBlink: { type: Boolean, default: true },
   fontWeight: { type: String, default: 'normal' },
-  terminalTheme: { type: String, default: 'defaultDark' }
+  terminalTheme: { type: String, default: 'defaultDark' },
+  defaultShell: { type: String, default: '' }
 });
 
 const Connection = mongoose.model('Connection', connectionSchema);
@@ -96,6 +97,65 @@ function getDefaultShell() {
   return shell;
 }
 
+// Helper: Detect available shells on the system
+function detectAvailableShells() {
+  const platform = os.platform();
+  const shells = [];
+
+  if (platform === 'win32') {
+    // Check for common Windows shells
+    const shellPaths = [
+      { name: 'Command Prompt', path: 'cmd.exe', type: 'cmd' },
+      { name: 'PowerShell', path: 'powershell.exe', type: 'powershell' },
+      { name: 'PowerShell 7', path: 'pwsh.exe', type: 'powershell' },
+      { name: 'Git Bash', path: 'bash.exe', type: 'bash', searchPaths: ['C:\\Program Files\\Git\\bin', 'C:\\Program Files (x86)\\Git\\bin'] },
+      { name: 'Windows Terminal', path: 'wt.exe', type: 'terminal' },
+    ];
+
+    shellPaths.forEach(shell => {
+      let found = false;
+      if (shell.path === 'cmd.exe' || shell.path === 'powershell.exe' || shell.path === 'pwsh.exe') {
+        // These are always available in PATH on Windows
+        found = true;
+      } else if (shell.searchPaths) {
+        // Check specific paths for Git Bash
+        shell.searchPaths.forEach(searchPath => {
+          const fs = require('fs');
+          if (fs.existsSync(searchPath)) {
+            found = true;
+          }
+        });
+      } else {
+        // Check if command exists
+        try {
+          const { execSync } = require('child_process');
+          execSync(`where ${shell.path}`, { stdio: 'ignore' });
+          found = true;
+        } catch (e) {
+          // Not found
+        }
+      }
+      if (found) {
+        shells.push(shell);
+      }
+    });
+  } else {
+    // Unix-like systems
+    const possibleShells = ['/bin/bash', '/bin/zsh', '/bin/sh', '/bin/fish', '/usr/bin/fish', '/bin/dash'];
+    const shellNames = { bash: 'Bash', zsh: 'Zsh', sh: 'Shell', fish: 'Fish', dash: 'Dash' };
+
+    possibleShells.forEach(shellPath => {
+      const fs = require('fs');
+      if (fs.existsSync(shellPath)) {
+        const name = shellPath.split('/').pop();
+        shells.push({ name: shellNames[name] || name, path: shellPath, type: 'unix' });
+      }
+    });
+  }
+
+  return shells;
+}
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
@@ -113,10 +173,26 @@ io.on('connection', (socket) => {
   });
 
   // Create local terminal
-  socket.on('terminal:create', (options = {}) => {
+  socket.on('terminal:create', async (options = {}) => {
     try {
       console.log('[Backend] terminal:create received, socket:', socket.id);
-      const shell = options.shell || getDefaultShell();
+
+      // Get settings to check for default shell
+      let settings = await Settings.findOne();
+      let shell = options.shell;
+
+      // If no shell specified in options, use default shell from settings
+      if (!shell && settings?.defaultShell) {
+        shell = settings.defaultShell;
+        console.log('[Backend] Using default shell from settings:', shell);
+      }
+
+      // Fall back to system default
+      if (!shell) {
+        shell = getDefaultShell();
+        console.log('[Backend] Using system default shell:', shell);
+      }
+
       const cwd = options.cwd || os.homedir();
       console.log('[Backend] Spawning shell:', shell, 'cwd:', cwd);
 
@@ -566,6 +642,16 @@ app.post('/api/test-ssh', async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Get available shells on the system
+app.get('/api/shells', (req, res) => {
+  try {
+    const shells = detectAvailableShells();
+    res.json(shells);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Start server

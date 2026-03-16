@@ -8,6 +8,9 @@ import terminalThemes from '../styles/terminalThemes';
 // Store terminals globally
 const terminals = new Map();
 
+// Track how many TerminalView instances are mounted
+let terminalViewMountCount = 0;
+
 // Get all active tab IDs
 const getActiveTabIds = (tabs) => new Set(tabs.map(t => t.id));
 
@@ -73,8 +76,15 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
 
   // Create terminal for a tab
   const createTerminalForTab = useCallback((tabId) => {
+    // Check if we already have a terminal for this tab
     if (terminals.has(tabId)) {
-      return terminals.get(tabId);
+      const existing = terminals.get(tabId);
+      // If terminal exists but was disposed, we need to recreate
+      if (existing.terminal._disposed) {
+        terminals.delete(tabId);
+      } else {
+        return existing;
+      }
     }
 
     const theme = getTerminalTheme();
@@ -119,9 +129,11 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     const terminalObj = createTerminalForTab(activeTab.id);
     const { terminal, fitAddon, clipboardAddon } = terminalObj;
 
-    // Get or create container
+    // Get or create container - always check and create if needed
     let container = document.getElementById(`terminal-${activeTab.id}`);
+
     if (!container) {
+      // Container doesn't exist - create it
       container = document.createElement('div');
       container.id = `terminal-${activeTab.id}`;
       container.style.width = '100%';
@@ -131,6 +143,12 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       // Open terminal in the new container
       terminal.open(container);
       fitAddon.fit();
+    } else {
+      // Container exists - make sure it's in the right place
+      if (container.parentElement !== containerRef.current) {
+        containerRef.current.appendChild(container);
+      }
+      container.style.display = 'block';
     }
 
     // Apply theme in case it changed
@@ -152,9 +170,22 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       }
     });
 
+    // Ensure container is in the DOM and visible
+    const activeContainer = document.getElementById(`terminal-${activeTab.id}`);
+    if (activeContainer && activeContainer.parentElement !== containerRef.current) {
+      // Container exists but was moved - put it back
+      containerRef.current.appendChild(activeContainer);
+      activeContainer.style.display = 'block';
+    }
+
     // Refresh and fit terminal when becoming active
     terminal.refresh(0, terminal.rows - 1);
     fitAddon.fit();
+
+    // Focus the terminal for input
+    setTimeout(() => {
+      terminal.focus();
+    }, 50);
 
   }, [activeTabId, activeTab, createTerminalForTab, getTerminalTheme]);
 
@@ -165,13 +196,18 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     const terminalObj = terminals.get(activeTab.id);
     const { terminal } = terminalObj;
 
-    // Only clear if this is a completely new session
+    // Only clear if this is a brand new session (first time connecting)
+    // Don't clear when switching between tabs
     const isNewSession = !terminalObj.sessionId && activeTab.sessionId;
-    if (isNewSession) {
+    if (isNewSession && !terminalObj.hasConnectedBefore) {
       terminal.clear();
+      terminalObj.hasConnectedBefore = true;
     }
 
-    // Update sessionId
+    // Update sessionId and track connection
+    if (activeTab.sessionId) {
+      terminalObj.hasConnectedBefore = true;
+    }
     terminalObj.sessionId = activeTab.sessionId;
 
     // Dispose old input handler if exists
@@ -230,6 +266,45 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab]);
 
+  // Handle window resize - fit terminal and scroll to bottom
+  useEffect(() => {
+    const handleResize = () => {
+      if (!activeTab || !terminals.has(activeTab.id)) return;
+
+      const terminalObj = terminals.get(activeTab.id);
+      if (terminalObj?.fitAddon) {
+        terminalObj.fitAddon.fit();
+        // Scroll to bottom to show latest logs after resize
+        terminalObj.terminal.scrollToBottom();
+        // Also notify backend of resize
+        if (activeTab.sessionId && onResize) {
+          onResize(activeTab.sessionId, terminalObj.terminal.cols, terminalObj.terminal.rows);
+        }
+      }
+    };
+
+    // Use debounce to avoid excessive resize calls
+    let timeoutId = null;
+    const debouncedResize = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 100);
+    };
+
+    window.addEventListener('resize', debouncedResize);
+
+    // Also handle sidebar collapse/uncollapse which changes terminal width
+    const handleSidebarResize = () => {
+      setTimeout(handleResize, 150);
+    };
+    window.addEventListener('sidebar:resize', handleSidebarResize);
+
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      window.removeEventListener('sidebar:resize', handleSidebarResize);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [activeTab, onResize]);
+
   // Listen for terminal data
   useEffect(() => {
     const handleTerminalData = (event) => {
@@ -241,6 +316,8 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       const terminalObj = terminals.get(activeTab.id);
       if (terminalObj) {
         terminalObj.terminal.write(data);
+        // Scroll to bottom to show latest logs
+        terminalObj.terminal.scrollToBottom();
       }
     };
 
@@ -253,6 +330,8 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
       const terminalObj = terminals.get(activeTab.id);
       if (terminalObj) {
         terminalObj.terminal.write(data);
+        // Scroll to bottom to show latest logs
+        terminalObj.terminal.scrollToBottom();
       }
     };
 
@@ -265,13 +344,18 @@ function TerminalView({ tabs, activeTabId, onInput, onResize, settings }) {
     };
   }, [activeTab?.sessionId, activeTab?.id]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - but only if truly unmounting (not just mode switch)
   useEffect(() => {
+    terminalViewMountCount += 1;
     return () => {
-      terminals.forEach(({ terminal }) => {
-        terminal.dispose();
-      });
-      terminals.clear();
+      terminalViewMountCount -= 1;
+      // Only cleanup if this is the final unmount (not mode switches)
+      if (terminalViewMountCount === 0) {
+        terminals.forEach(({ terminal }) => {
+          terminal.dispose();
+        });
+        terminals.clear();
+      }
     };
   }, []);
 

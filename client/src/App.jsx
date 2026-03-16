@@ -13,7 +13,6 @@ import ConnectionForm from './components/ConnectionForm';
 import CommandModal from './components/CommandModal';
 import CommandGroupModal from './components/CommandGroupModal';
 import AuthModal from './components/AuthModal';
-import TerminalListModal from './components/TerminalListModal';
 
 const BACKEND_URL = 'http://localhost:3001';
 
@@ -34,20 +33,6 @@ function App() {
   const [duplicateModal, setDuplicateModal] = useState(null);
   const [showTerminalList, setShowTerminalList] = useState(false);
   const activeTabRef = useRef(null);
-
-  // Keyboard shortcut for terminal list modal (Ctrl+` or Ctrl+Shift+\)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ctrl+` or Ctrl+Shift+\
-      if (e.ctrlKey && (e.key === '`' || e.key === '\\')) {
-        e.preventDefault();
-        setShowTerminalList(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const {
     tabs,
@@ -70,6 +55,40 @@ function App() {
     updateCommand,
     deleteCommand
   } = useStore();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+` or Ctrl+Shift+\ - Focus mode
+      if (e.ctrlKey && (e.key === '`' || e.key === '\\')) {
+        e.preventDefault();
+        setShowTerminalList(true);
+      }
+
+      // Ctrl+Tab - Next tab
+      if (e.ctrlKey && e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        if (tabs.length > 1) {
+          const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+          const nextIndex = (currentIndex + 1) % tabs.length;
+          setActiveTab(tabs[nextIndex].id);
+        }
+      }
+
+      // Ctrl+Shift+Tab - Previous tab
+      if (e.ctrlKey && e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
+        if (tabs.length > 1) {
+          const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+          const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+          setActiveTab(tabs[prevIndex].id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [tabs, activeTabId, setActiveTab]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -498,27 +517,7 @@ function App() {
     return <AuthModal onAuth={handleAuth} error={authError} />;
   }
 
-  // Full-screen terminal list mode (hides header/sidebar, shows tabs + terminal content)
-  if (showTerminalList) {
-    return (
-      <TerminalListModal
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onSelectTab={setActiveTab}
-        onClose={() => setShowTerminalList(false)}
-        onNewTab={createTerminal}
-      >
-        <TerminalView
-          tabs={tabs}
-          activeTabId={activeTabId}
-          onInput={handleTerminalInput}
-          onResize={handleTerminalResize}
-          settings={settings}
-        />
-      </TerminalListModal>
-    );
-  }
-
+  
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden relative">
       {/* Animated background gradient */}
@@ -541,7 +540,8 @@ function App() {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header - hidden in focus mode */}
+      {!showTerminalList && (
       <header className="flex items-center justify-between px-4 py-3 bg-[#0a0a0f]/90 backdrop-blur-sm border-b border-white/5">
         <div className="flex items-center gap-3">
           <button
@@ -596,10 +596,76 @@ function App() {
           </button>
         </div>
       </header>
+      )}
+
+      {/* Focus Mode Header */}
+      {showTerminalList && (
+        <div className="flex items-center bg-[#0a0a0f]/95 border-b border-white/5 px-2">
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              className={`group flex items-center gap-2 px-4 py-3 text-sm cursor-pointer border-r border-white/5 transition-all min-w-0 relative ${
+                tab.id === activeTabId
+                  ? 'tab-active text-white bg-white/5'
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.02]'
+              } ${tab.connecting ? 'opacity-70' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.id === activeTabId && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-neon-purple via-neon-cyan to-neon-pink" />
+              )}
+              {tab.type === 'ssh' ? (
+                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-neon-green/20 to-neon-cyan/20 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-neon-cyan/20 to-neon-blue/20 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+              <span className="truncate max-w-36">{tab.title}</span>
+              <button
+                className="ml-1 p-1 rounded transition-all opacity-0 group-hover:opacity-100 hover:bg-white/10 text-gray-500 hover:text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeTerminal(tab.id);
+                }}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+          <button
+            className="flex items-center justify-center px-3 py-3 text-gray-500 hover:text-white hover:bg-white/[0.02] transition-all group border-l border-white/5"
+            onClick={createTerminal}
+            title="New Terminal"
+          >
+            <div className="w-5 h-5 rounded-md flex items-center justify-center border border-dashed border-white/10 group-hover:border-neon-purple/50 group-hover:bg-neon-purple/10 transition-all">
+              <svg className="w-3 h-3 group-hover:text-neon-purple transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+          </button>
+          <button
+            onClick={() => setShowTerminalList(false)}
+            className="ml-auto px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all flex items-center gap-2"
+          >
+            <span>Exit Focus</span>
+            <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs text-gray-400">Esc</kbd>
+          </button>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar - hidden in focus mode */}
+        {!showTerminalList && (
         <Sidebar
           connections={connections}
           commands={commands}
@@ -616,13 +682,19 @@ function App() {
           onEditCommandGroup={handleEditCommandGroup}
           onDeleteCommandGroup={handleDeleteCommandGroup}
           collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleCollapse={() => {
+            setSidebarCollapsed(!sidebarCollapsed);
+            window.dispatchEvent(new Event('sidebar:resize'));
+          }}
           connectingId={connectingId}
+          position="right"
         />
+        )}
 
         {/* Terminal Area */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0f]/50">
-          {/* Tab Bar */}
+          {/* Tab Bar - hidden in focus mode */}
+          {!showTerminalList && (
           <TabBar
             tabs={tabs}
             activeTabId={activeTabId}
@@ -631,6 +703,7 @@ function App() {
             onNewTab={createTerminal}
             onTabRename={(tabId, newTitle) => updateTab(tabId, { title: newTitle })}
           />
+          )}
 
           {/* Content */}
           <div className="flex-1 overflow-hidden relative">

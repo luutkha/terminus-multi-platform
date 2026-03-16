@@ -17,8 +17,11 @@ function Sidebar({
   onDeleteCommandGroup,
   collapsed,
   onToggleCollapse,
-  connectingId
+  connectingId,
+  position = 'left'
 }) {
+  const isRight = position === 'right';
+  const borderClass = isRight ? 'border-l' : 'border-r';
   const [activeSection, setActiveSection] = useState('connections');
   const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [contextMenu, setContextMenu] = useState(null);
@@ -84,7 +87,7 @@ function Sidebar({
 
   if (collapsed) {
     return (
-      <div className="w-14 bg-[#0a0a0f]/80 backdrop-blur-sm border-r border-white/5 flex flex-col items-center py-3 gap-2">
+      <div className={`w-14 bg-[#0a0a0f]/80 backdrop-blur-sm ${borderClass} border-white/5 flex flex-col items-center py-3 gap-2`}>
         <button
           onClick={onToggleCollapse}
           className="p-2.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all group relative"
@@ -123,7 +126,7 @@ function Sidebar({
 
   return (
     <>
-      <div className="w-72 bg-[#0a0a0f]/80 backdrop-blur-sm border-r border-white/5 flex flex-col">
+      <div className={`w-72 bg-[#0a0a0f]/80 backdrop-blur-sm ${borderClass} border-white/5 flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <div className="flex items-center gap-2">
