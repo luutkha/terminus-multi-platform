@@ -32,8 +32,8 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    // In production, load from dist folder
-    const distPath = path.join(__dirname, '..', 'client', 'dist', 'index.html');
+    // In production, load from app.asar (client folder was copied from client/dist)
+    const distPath = path.join(__dirname, 'client', 'index.html');
     console.log('Loading from:', distPath);
     mainWindow.loadFile(distPath);
   }
@@ -49,24 +49,36 @@ function createWindow() {
 }
 
 function startBackend() {
-  const backendPath = path.join(__dirname, 'backend');
+  // In production, backend is in extraResources (resources/backend)
+  const isDev = !app.isPackaged;
+  let backendPath;
 
-  backendProcess = spawn('npm', ['run', 'dev'], {
+  if (isDev) {
+    // In development, backend is next to main.js
+    backendPath = path.join(__dirname, 'backend');
+  } else {
+    // In production, backend is in resources folder (extraResources)
+    backendPath = path.join(process.resourcesPath, 'backend');
+  }
+
+  console.log('[Main] Backend path:', backendPath);
+  console.log('[Main] Is development:', isDev);
+
+  // Use cmd.exe explicitly on Windows to avoid spawn ENOENT error
+  const shellCmd = process.platform === 'win32' ? process.env.COMSPEC || 'cmd.exe' : '/bin/sh';
+  backendProcess = spawn(shellCmd, ['/c', 'node', 'src/index.js'], {
     cwd: backendPath,
-    shell: true,
-    env: { ...process.env, NODE_ENV: 'development' }
+    shell: false,
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: isDev ? 'development' : 'production' }
   });
 
-  backendProcess.stdout.on('data', (data) => {
-    console.log(`Backend: ${data}`);
-  });
-
-  backendProcess.stderr.on('data', (data) => {
-    console.error(`Backend Error: ${data}`);
+  backendProcess.on('error', (err) => {
+    console.error('[Main] Backend process error:', err);
   });
 
   backendProcess.on('close', (code) => {
-    console.log(`Backend process exited with code ${code}`);
+    console.log(`[Main] Backend process exited with code ${code}`);
   });
 }
 

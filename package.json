@@ -7,9 +7,9 @@
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:electron\"",
     "dev:client": "cd client && npm run dev",
     "dev:electron": "cd electron && npm run dev",
-    "build": "cd client && npm run build && cd ../electron && npm run build",
+    "build": "cd client && npm run build && cd ../electron && npm run make",
     "build:client": "cd client && npm run build",
-    "build:electron": "cd electron && npm run build",
+    "build:electron": "cd electron && npm run make",
     "start": "electron ."
   },
   "keywords": ["terminal", "electron", "ssh", "server-management"],

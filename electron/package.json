@@ -1,46 +1,24 @@
 {
   "name": "terminus-electron",
+  "productName": "Terminus",
   "version": "1.0.0",
   "description": "Desktop terminal emulator like Terminus",
-  "author": "Terminus",
   "main": "main.js",
+  "author": "Terminus",
   "scripts": {
-    "dev": "electron .",
-    "build": "electron-builder --win --x64",
-    "start": "electron ."
+    "start": "electron .",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish"
   },
-  "build": {
-    "appId": "com.terminus.app",
-    "productName": "Terminus",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "backend/**/*",
-      "../client/dist/**/*"
-    ],
-    "win": {
-      "target": "zip",
-      "icon": null
-    },
-    "portable": {
-      "artifactName": "Terminus.exe"
-    },
-    "extraResources": [
-      {
-        "from": "backend",
-        "to": "backend",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "asar": true
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1"
   },
   "devDependencies": {
-    "electron": "^28.3.3",
-    "electron-builder": "^24.9.1"
-  }
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/maker-squirrel": "^7.6.0",
+    "@electron-forge/maker-zip": "^7.6.0",
+    "electron": "^28.3.3"
+  },
+  "config": {}
 }
